@@ -61,6 +61,7 @@ class HistogramLaneFilterNode(DTROS):
         self.camera_info_received = False
 
         self._filter = rospy.get_param("~lane_filter_histogram_configuration", None)
+        print(self._filter)
         self._debug = rospy.get_param("~debug", False)
         self._predict_freq = rospy.get_param("~predict_frequency", 30.0)
 
@@ -212,9 +213,6 @@ class HistogramLaneFilterNode(DTROS):
         self.pub_segments_img.publish(segments_img)
         projected_segments_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.filter.image_w_segs_rgb,cv2.COLOR_BGR2RGB))
         self.pub_projected_segments_img.publish(projected_segments_img)
-
-
-
 
 
     def loginfo(self, s):

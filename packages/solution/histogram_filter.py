@@ -27,8 +27,10 @@ def histogram_predict(belief, left_encoder_ticks, right_encoder_ticks, grid_spec
     maxids = np.unravel_index(belief_in.argmax(), belief_in.shape)
     phi_max = grid_spec['phi_min'] + (maxids[1] + 0.5) * grid_spec['delta_phi']
 
-    d_left_wheel = left_encoder_ticks * robot_spec['wheel_radius'] * np.pi / robot_spec['encoder_resolution']
-    d_right_wheel = right_encoder_ticks * robot_spec['wheel_radius'] * np.pi / robot_spec['encoder_resolution']
+    alpha = 2 * np.pi / robot_spec['encoder_resolution']
+
+    d_left_wheel = left_encoder_ticks * robot_spec['wheel_radius'] * alpha
+    d_right_wheel = right_encoder_ticks * robot_spec['wheel_radius'] * alpha
 
     v = (d_left_wheel + d_right_wheel) / 2
     w = (d_right_wheel - d_left_wheel) / robot_spec['wheel_baseline']
@@ -166,6 +168,8 @@ def histogram_update(belief, segments, road_spec, grid_spec):
 
     measurement_likelihood = generate_measurement_likelihood(segmentsArray, road_spec, grid_spec)
 
+    # print("ML", measurement_likelihood)
+    # print("BELIEF", belief)
     if measurement_likelihood is not None:
         # TODO: combine the prior belief and the measurement likelihood to get the posterior belief
         # Don't forget that you may need to normalize to ensure that the output is valid
@@ -174,10 +178,12 @@ def histogram_update(belief, segments, road_spec, grid_spec):
         # replace this with something that combines the belief and the measurement_likelihood
         belief = belief * measurement_likelihood
         if np.sum(belief) == 0:
-            belief = belief
+            # if the sum of the belief is zero, we have no information about the position, so we use uniform distribution
+            # -> happens at the initialization step on the real robot for some reason
+            belief = 1/len(belief) * np.ones_like(belief)
         else:
             belief = belief / np.sum(belief)
-    print(belief)
+    # print("BELIEF2", belief, np.sum(belief))
     return measurement_likelihood, belief
 
 def getSegmentDistance(segment):
